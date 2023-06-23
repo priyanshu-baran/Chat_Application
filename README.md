@@ -10,11 +10,11 @@ Although there are still more features which I am looking forward to add like, f
 
  <!-- and then share your experience in this [post](). -->
 
-<!-- ---
+---
 
 ## Demo 👀
 
-You can view the demo of this website by following [this link](https://boilerplate-for-websites.netlify.app/) **(For better user experience don't open it in your mobile phone)**. Or else you can also view its demonstration video [here](https://clipchamp.com/watch/B3gtuU7A1nO).<br> For hosting, I have used [Netlify](https://app.netlify.com) to host this website. -->
+You can view the demo of this website by following [this link](https://web-based-real-time-chat-application.netlify.app/) **(For better user experience don't open it in your mobile phone)**. Or else you can also view its demonstration video [here](https://clipchamp.com/watch/B3gtuU7A1nO).<br> For hosting, I have used [Netlify](https://app.netlify.com) to host this website.
 
 ---
 

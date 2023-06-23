@@ -6,7 +6,8 @@ import io from 'socket.io-client';
 import axios from 'axios';
 
 import { data } from '.';
-const socket = io('http://localhost:5000');
+// const socket = io('http://localhost:5000');
+const socket = io('https://web-based-real-time-chat-application.netlify.app');
 
 export const Main = ({ online }) => {
   const [room, setRoom] = useState('');

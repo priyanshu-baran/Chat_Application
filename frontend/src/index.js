@@ -10,7 +10,8 @@ import './css/main.css';
 import './css/entrance.css';
 import './css/notify.css';
 
-const react_url = 'http://localhost:5000';
+// const react_url = 'http://localhost:5000';
+const react_url = 'https://web-based-real-time-chat-application.netlify.app';
 const auth = getAuth(
   initializeApp({
     apiKey: 'AIzaSyBNdhxEV9ohe6BWBJLQDkwGUoqPxIv0vJo',
