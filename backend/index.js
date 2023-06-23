@@ -4,6 +4,7 @@ import cors from 'cors';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 dotenv.config();
+import serverless from 'serverless-http';
 
 import UserState from './models/state.model.js';
 import Message from './models/message.model.js';
@@ -160,3 +161,5 @@ io.on('connection', (socket) => {
     console.log('User Disconnected');
   });
 });
+
+export const handler = serverless(app);

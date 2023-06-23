@@ -16,6 +16,7 @@
     "dotenv": "^16.1.4",
     "express": "^4.18.2",
     "mongoose": "^7.2.2",
+    "serverless-http": "^3.2.0",
     "socket.io": "^4.6.2"
   },
   "devDependencies": {
