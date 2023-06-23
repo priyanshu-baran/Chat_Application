@@ -5,6 +5,7 @@ import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 dotenv.config();
 import serverless from 'serverless-http';
+import http from 'http';
 
 import UserState from './models/state.model.js';
 import Message from './models/message.model.js';
@@ -27,9 +28,11 @@ connection.once('open', () => {
   console.log('MongoDB database connection established successfully');
 });
 
-const server = app.listen(port, () => {
+app.listen(port, () => {
   console.log(`Server is running on port: ${port}`);
 });
+
+const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
