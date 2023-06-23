@@ -4,8 +4,6 @@ import cors from 'cors';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 dotenv.config();
-import serverless from 'serverless-http';
-import http from 'http';
 
 import UserState from './models/state.model.js';
 import Message from './models/message.model.js';
@@ -28,17 +26,13 @@ connection.once('open', () => {
   console.log('MongoDB database connection established successfully');
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server is running on port: ${port}`);
 });
 
-const server = http.createServer(app);
-console.log(server);
-
 const io = new Server(server, {
   cors: {
-    // origin: 'http://localhost:3000',
-    origin: '*',
+    origin: 'http://localhost:3000',
     methods: ['GET', 'POST'],
     allowedHeaders: ['my-custom-header'],
     credentials: true,
@@ -165,5 +159,3 @@ io.on('connection', (socket) => {
     console.log('User Disconnected');
   });
 });
-
-export const handler = serverless(app);

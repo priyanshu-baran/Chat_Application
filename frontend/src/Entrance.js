@@ -14,10 +14,7 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 
 import { data } from '.';
-// const socket = io('http://localhost:5000');
-const socket = io('https://web-based-real-time-chat-application.netlify.app', {
-  rejectUnauthorized: false,
-});
+const socket = io('http://localhost:5000');
 
 export const Entrance = () => {
   const initialValues = () => {
