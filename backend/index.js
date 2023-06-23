@@ -4,9 +4,6 @@ import cors from 'cors';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 dotenv.config();
-// import serverless from 'serverless-http';
-
-// const router = express.Router();
 
 import UserState from './models/state.model.js';
 import Message from './models/message.model.js';
@@ -19,16 +16,7 @@ const port = process.env.PORT || 8000;
 app.use(cors());
 app.use(express.json());
 
-// router.get('/', (req, res) => {
-//   res.json({
-//     serviceId: process.env.EMAILJS_SERVICE_ID,
-//     templateId: process.env.EMAILJS_TEMPLATE_ID,
-//     apiKey: process.env.EMAILJS_API_KEY,
-//   });
-// });
-
 app.use('/users', usersRouter);
-// app.use('/api/env', router);
 
 const uri = process.env.ATLAS_URI;
 mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -44,7 +32,8 @@ const server = app.listen(port, () => {
 
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:3000',
+    // origin: 'http://localhost:3000',
+    origin: 'https://web-based-real-time-chat-application.netlify.app',
     methods: ['GET', 'POST'],
     allowedHeaders: ['my-custom-header'],
     credentials: true,
@@ -113,11 +102,11 @@ io.on('connection', (socket) => {
     try {
       if (currentRoom) {
         socket.leave(currentRoom);
-        // console.log(`Left ${currentRoom} room..!!`);
+        console.log(`Left ${currentRoom} room..!!`);
       }
       currentRoom = room;
       socket.join(room);
-      // console.log(`Joined ${room} room..!!`);
+      console.log(`Joined ${room} room..!!`);
       const initialMessages = await Message.find({ room: room });
       if (initialMessages.length > 0) {
         const contents = initialMessages[0].contents;
@@ -164,12 +153,10 @@ io.on('connection', (socket) => {
 
   socket.on('leave_room', (room) => {
     socket.leave(room);
-    // console.log(`Left ${room} room..!!`);
+    console.log(`Left ${room} room..!!`);
   });
 
   socket.on('disconnect', () => {
     console.log('User Disconnected');
   });
 });
-
-// export const handler = serverless(app);
