@@ -33,6 +33,7 @@ app.listen(port, () => {
 });
 
 const server = http.createServer(app);
+console.log(server);
 
 const io = new Server(server, {
   cors: {
