@@ -1,13 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { getAuth, getIdTokenResult, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { initializeApp } from 'firebase/app';
 
 import 'react-toastify/dist/ReactToastify.css';
 
 import { App } from './App';
 import './css/main.css';
-import './css/test.css';
 import './css/entrance.css';
 import './css/notify.css';
 
@@ -29,16 +28,13 @@ export const data = { react_url, auth };
 onAuthStateChanged(auth, (user) => {
   if (user) {
     console.log('User is signed in');
-    const userString = JSON.stringify(user);
+    const userString = JSON.stringify(user, (key, value) => {
+      if (value === undefined) {
+        return null;
+      }
+      return value;
+    });
     sessionStorage.setItem('user', userString);
-    getIdTokenResult(user)
-      .then((idTokenResult) => {
-        const expirationTime = idTokenResult.expirationTime;
-        console.log('Token expiration time:', expirationTime);
-      })
-      .catch((error) => {
-        console.error('Error occurred while retrieving token result:', error);
-      });
   } else {
     console.log('User is signed out');
   }

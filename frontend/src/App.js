@@ -3,7 +3,6 @@ import { ToastContainer } from 'react-toastify';
 import { useState } from 'react';
 
 import { Main } from './Main';
-import { Test } from './Test';
 import { Entrance } from './Entrance';
 import { Notify } from './Notify';
 
@@ -16,7 +15,7 @@ export const App = () => {
         <Routes>
           <Route
             path='/'
-            element={<Entrance online={online} />}
+            element={<Entrance />}
           />
           <Route
             path='/main'
@@ -29,10 +28,6 @@ export const App = () => {
                 />
               </>
             }
-          />
-          <Route
-            path='/test'
-            element={<Test />}
           />
         </Routes>
       </Router>

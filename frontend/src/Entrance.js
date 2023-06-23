@@ -1,19 +1,24 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import {
+  GoogleAuthProvider,
+  signInWithPopup,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from 'firebase/auth';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import io from 'socket.io-client';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import * as Yup from 'yup';
 
 import { data } from '.';
 const socket = io('http://localhost:5000');
 
-export const Entrance = ({ online }) => {
+export const Entrance = () => {
   const initialValues = () => {
     setLoginStuff({ email: '', pass: '' });
-    setSignupStuff({ name: '', email: '', pass: '', copass: '' });
     setShowHide({
       for: {
         for1: 'hide',
@@ -42,24 +47,69 @@ export const Entrance = ({ online }) => {
     email: '',
     pass: '',
   });
-  const [signupStuff, setSignupStuff] = useState({
-    name: '',
-    email: '',
-    pass: '',
-    copass: '',
-  });
   const [toggleButton, setToggleButton] = useState({
     facebook: 'Login with Facebook',
     google: 'Login with Google',
   });
   const handleLogIn = (e) => {
     e.preventDefault();
-    console.log({ ...loginStuff });
+    signInWithEmailAndPassword(data.auth, loginStuff.email, loginStuff.pass)
+      .then(() => {
+        const email = data.auth.currentUser.email;
+        axios.get(`${data.react_url}/users/`).then((res) => {
+          const existingUser = res.data.find((user) => user.email === email);
+          if (existingUser) {
+            toast.success('Logged in Successfully');
+            socket.emit('loggedIn', {
+              details: data.auth.currentUser,
+              name: existingUser.username,
+            });
+            usenavigate('/main');
+          } else {
+            toast.error('Please signup first before logging in');
+          }
+        });
+      })
+      .catch((err) => {
+        toast.error('User not found');
+        initialValues();
+        console.log(err);
+      });
   };
-  const handleSignUp = (e) => {
-    e.preventDefault();
-    console.log({ ...signupStuff });
-    initialValues();
+  const handleSignUp = (values) => {
+    const { username, email, password } = values;
+    createUserWithEmailAndPassword(data.auth, email, password)
+      .then(() => {
+        const obj = { username, password, email };
+        axios
+          .get(`${data.react_url}/users/`)
+          .then((res) => {
+            const extract = res.data.filter((user) => user.email === email);
+            if (extract.length === 0) {
+              axios
+                .post(`${data.react_url}/users/add`, obj)
+                .then(() => {
+                  toast.success('Registered Successfully');
+                  socket.emit('loggedIn', {
+                    details: data.auth.currentUser,
+                    name: obj.username,
+                  });
+                  usenavigate('/main');
+                })
+                .catch((err) => {
+                  console.error(err);
+                });
+            } else {
+              toast.error('User already exists');
+            }
+          })
+          .catch((err) => {
+            console.error(err);
+          });
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
   const handleToggle = () => {
     setToggle(!toggle);
@@ -87,8 +137,7 @@ export const Entrance = ({ online }) => {
           .map((word) => word.split('').reverse().join(''))
           .join('')
           .toLowerCase();
-        const isLoggedIn = online;
-        let obj = { username, email, password, isLoggedIn };
+        let obj = { username, email, password };
         axios
           .get(`${data.react_url}/users/`)
           .then((res) => {
@@ -96,9 +145,12 @@ export const Entrance = ({ online }) => {
             if (extract.length === 0) {
               axios
                 .post(`${data.react_url}/users/add`, obj)
-                .then((res) => {
+                .then(() => {
                   toast.success('Registered Successfully');
-                  socket.emit('loggedIn', data.auth.currentUser);
+                  socket.emit('loggedIn', {
+                    details: data.auth.currentUser,
+                    name: data.auth.currentUser.displayName,
+                  });
                   usenavigate('/main');
                 })
                 .catch((err) => {
@@ -128,10 +180,13 @@ export const Entrance = ({ online }) => {
             const existingUser = res.data.find((user) => user.email === email);
             if (existingUser) {
               toast.success('Logged in Successfully');
-              socket.emit('loggedIn', data.auth.currentUser);
+              socket.emit('loggedIn', {
+                details: data.auth.currentUser,
+                name: data.auth.currentUser.displayName,
+              });
               usenavigate('/main');
             } else {
-              toast.error('Please sign up before logging in');
+              toast.error('Please signup first before logging in');
             }
           })
           .catch((err) => {
@@ -165,6 +220,21 @@ export const Entrance = ({ online }) => {
       };
     });
   };
+  useEffect(() => {
+    sessionStorage.removeItem('user');
+  }, []);
+  const validationSchema = Yup.object({
+    username: Yup.string().required('*Name is required'),
+    email: Yup.string()
+      .required('*Email is required')
+      .matches(/^[\w-\\.]+@([\w-]+\.)+[\w-]{2,4}$/, 'Invalid email address'),
+    password: Yup.string()
+      .required('*Password is required')
+      .min(8, 'Password is too small'),
+    coPassword: Yup.string()
+      .oneOf([Yup.ref('password'), null], 'Passwords must match')
+      .required('*Confirm Password is required'),
+  });
   return (
     <section className='entry_container forms'>
       {toggle ? (
@@ -245,64 +315,82 @@ export const Entrance = ({ online }) => {
         <div className='form signup'>
           <div className='form-content'>
             <header>Signup</header>
-            <form onSubmit={handleSignUp}>
-              <div className='field input-field'>
-                <input
-                  type='text'
-                  placeholder='Full Name'
-                  className='input'
-                  value={signupStuff.name}
-                  onChange={(e) =>
-                    setSignupStuff({ ...signupStuff, name: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div className='field input-field'>
-                <input
-                  type='email'
-                  placeholder='Email'
-                  className='input'
-                  value={signupStuff.email}
-                  onChange={(e) =>
-                    setSignupStuff({ ...signupStuff, email: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div className='field input-field'>
-                <input
-                  type={`${showHide.in.in2 ? 'password' : 'text'}`}
-                  placeholder='Create password'
-                  className='password'
-                  value={signupStuff.pass}
-                  onChange={(e) =>
-                    setSignupStuff({ ...signupStuff, pass: e.target.value })
-                  }
-                  required
-                />
-                <i
-                  onClick={handleShowHide}
-                  ref={icon}
-                  id='ref2'
-                  className={`bx bx-${showHide.for.for2} eye-icon`}></i>
-              </div>
-              <div className='field input-field'>
-                <input
-                  type='password'
-                  placeholder='Confirm password'
-                  className='password'
-                  value={signupStuff.copass}
-                  onChange={(e) =>
-                    setSignupStuff({ ...signupStuff, copass: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div className='field button-field'>
-                <button>Signup</button>
-              </div>
-            </form>
+            <Formik
+              initialValues={{
+                username: '',
+                email: '',
+                password: '',
+                coPassword: '',
+              }}
+              validationSchema={validationSchema}
+              onSubmit={handleSignUp}>
+              <Form>
+                <div className='field input-field'>
+                  <Field
+                    type='text'
+                    name='username'
+                    placeholder='Full Name'
+                    className='input'
+                    autoComplete='off'
+                  />
+                  <ErrorMessage
+                    name='username'
+                    component='div'
+                    className='error'
+                  />
+                </div>
+                <div className='field input-field'>
+                  <Field
+                    type='email'
+                    name='email'
+                    placeholder='Email'
+                    className='input'
+                    autoComplete='off'
+                  />
+                  <ErrorMessage
+                    name='email'
+                    component='div'
+                    className='error'
+                  />
+                </div>
+                <div className='field input-field'>
+                  <Field
+                    type={showHide.in.in2 ? 'password' : 'text'}
+                    name='password'
+                    placeholder='Create password'
+                    className='password'
+                    autoComplete='off'
+                  />
+                  <ErrorMessage
+                    name='password'
+                    component='div'
+                    className='error'
+                  />
+                  <i
+                    onClick={handleShowHide}
+                    ref={icon}
+                    id='ref2'
+                    className={`bx bx-${showHide.for.for2} eye-icon`}></i>
+                </div>
+                <div className='field input-field'>
+                  <Field
+                    type='password'
+                    name='coPassword'
+                    placeholder='Confirm password'
+                    className='password'
+                    autoComplete='off'
+                  />
+                  <ErrorMessage
+                    name='coPassword'
+                    component='div'
+                    className='error'
+                  />
+                </div>
+                <div className='field button-field'>
+                  <button type='submit'>Signup</button>
+                </div>
+              </Form>
+            </Formik>
             <div className='form-link'>
               <span>
                 Already have an account?{' '}
@@ -315,9 +403,7 @@ export const Entrance = ({ online }) => {
             </div>
           </div>
           <div className='line'></div>
-          <div
-            // onClick={handleSignOutWithGoogle}
-            className='media-options'>
+          <div className='media-options'>
             <a className='field facebook'>
               <i className='bx bxl-facebook facebook-icon'></i>
               <span>{toggleButton.facebook}</span>

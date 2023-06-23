@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -12,6 +13,7 @@ export const Main = ({ online }) => {
   const dummy = useRef();
   const field = useRef();
   const usenavigate = useNavigate('');
+  const [currentUsername, setCurrentUsername] = useState('');
   const [userDetails, setUserDetails] = useState({});
   const [isChecked, setIsChecked] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
@@ -24,7 +26,7 @@ export const Main = ({ online }) => {
       offline: [],
     },
     color: ['indigo', 'gray', 'orange', 'pink', 'purple'],
-    unreadMsg: [2, '', 1, '', ''],
+    unreadMsg: ['', '', '', '', ''],
   });
   const updateChatList = (onlineUsers, offlineUsers) => {
     setChatList((prevChatList) => ({
@@ -87,7 +89,7 @@ export const Main = ({ online }) => {
         minute: '2-digit',
       });
       const msgContent = {
-        from: data.auth.currentUser.displayName,
+        from: userDetails.displayName,
         to: recieverInfo,
         msg,
         time: currentTime,
@@ -97,7 +99,6 @@ export const Main = ({ online }) => {
         room,
         msgContent,
       };
-      console.log(details.room);
       socket.emit('send_message', details);
       setMsgList(updatedMsg);
       setMsg('');
@@ -119,9 +120,30 @@ export const Main = ({ online }) => {
     sessionStorage.removeItem('user');
   };
   useEffect(() => {
-    const userString = sessionStorage.getItem('user');
-    const user = JSON.parse(userString);
-    setUserDetails(user);
+    const fetchData = () => {
+      const userString = sessionStorage.getItem('user');
+      let infoUser = JSON.parse(userString);
+      axios
+        .get(`${data.react_url}/users/`)
+        .then((res) => {
+          const existingUser = res.data.find(
+            (user) => user.email === infoUser.email
+          );
+          setCurrentUsername(existingUser.username);
+          if (infoUser.displayName === null && infoUser.photoURL === null) {
+            infoUser = {
+              ...infoUser,
+              displayName: currentUsername,
+              photoURL: 'profile-pic.jpg',
+            };
+          }
+          setUserDetails(infoUser);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    };
+    fetchData();
     const updateUserInfo = () => {
       setUserInfo((prevUserInfo) => ({
         ...prevUserInfo,
@@ -140,27 +162,52 @@ export const Main = ({ online }) => {
     return () => {
       document.removeEventListener('keydown', handleKeyPress);
     };
-  }, [recieverInfo, userDetails.displayName, userDetails.photoURL]);
+  }, [
+    currentUsername,
+    recieverInfo,
+    userDetails.displayName,
+    userDetails.photoURL,
+  ]);
 
   useEffect(() => {
+    const storedUserList = localStorage.getItem('userList');
+    const initialUserList = storedUserList
+      ? JSON.parse(storedUserList)
+      : {
+          online: [],
+          offline: [],
+        };
+    updateChatList(initialUserList.online, initialUserList.offline);
     socket.on('userLoggedIn', (user) => {
       const updatedOnlineUsers = chatList.usersList.online.filter(
         (username) => username !== user
       );
       updateChatList(updatedOnlineUsers, chatList.usersList.offline);
-      if (user !== data.auth.currentUser.displayName) {
+      if (user !== userDetails.displayName) {
         toast.info(`${user} logged In`);
       }
     });
 
     socket.on('updateUserLists', ({ onlineUsers, offlineUsers }) => {
       const filteredOnlineUsers = onlineUsers.filter(
-        (user) => user !== data.auth.currentUser.displayName
+        (user) => user !== userDetails.displayName
       );
       const filteredOfflineUsers = offlineUsers.filter(
-        (user) => user !== data.auth.currentUser.displayName
+        (user) => user !== userDetails.displayName
       );
-      updateChatList(filteredOnlineUsers, filteredOfflineUsers);
+      if (
+        JSON.stringify(chatList.usersList.online) !==
+          JSON.stringify(filteredOnlineUsers) ||
+        JSON.stringify(chatList.usersList.offline) !==
+          JSON.stringify(filteredOfflineUsers)
+      ) {
+        updateChatList(filteredOnlineUsers, filteredOfflineUsers);
+        const updatedUserList = {
+          online: filteredOnlineUsers,
+          offline: filteredOfflineUsers,
+        };
+        localStorage.setItem('userList', JSON.stringify(updatedUserList));
+      }
     });
 
     socket.on('userLoggedOut', (user) => {
@@ -177,7 +224,7 @@ export const Main = ({ online }) => {
       socket.off('userLoggedOut');
       socket.off('userLoggedIn');
     };
-  }, [chatList, userDetails.displayName]);
+  }, [userDetails.displayName]);
 
   useEffect(() => {
     socket.on('receive_message', (content) => {
@@ -330,24 +377,21 @@ export const Main = ({ online }) => {
                         <div
                           key={index}
                           className={`col-start-${
-                            message.from === data.auth.currentUser.displayName
-                              ? '6'
-                              : '1'
+                            message.from === userDetails.displayName ? '6' : '1'
                           } col-end-${
-                            message.from === data.auth.currentUser.displayName
+                            message.from === userDetails.displayName
                               ? '13'
                               : '8'
                           } p-3 rounded-lg`}>
                           <div
                             className={`flex ${
-                              message.from === data.auth.currentUser.displayName
+                              message.from === userDetails.displayName
                                 ? 'justify-start flex-row-reverse'
                                 : 'items-center'
                             }`}>
                             <div
                               className={`flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0`}>
-                              {message.from ===
-                              data.auth.currentUser.displayName
+                              {message.from === userDetails.displayName
                                 ? userInfo.username
                                     .split(' ')
                                     .map((word) => word.charAt(0))
@@ -363,14 +407,12 @@ export const Main = ({ online }) => {
                                 maxWidth: '550px',
                               }}
                               className={`relative ${
-                                message.from ===
-                                data.auth.currentUser.displayName
+                                message.from === userDetails.displayName
                                   ? 'mr-3 bg-indigo-100'
                                   : 'ml-3 bg-white'
                               } text-sm py-2 px-4 shadow rounded-xl`}>
                               <div>{message.msg}</div>
-                              {message.from ===
-                                data.auth.currentUser.displayName && (
+                              {message.from === userDetails.displayName && (
                                 <div
                                   style={{ minWidth: '100px' }}
                                   className='absolute text-xs bottom-0 right-0 -mb-5 mr-2 text-gray-500'>
@@ -382,69 +424,6 @@ export const Main = ({ online }) => {
                         </div>
                       ))}
                       <div ref={dummy}></div>
-                      {/* <div className='col-start-1 col-end-8 p-3 rounded-lg'>
-                      <div className='flex flex-row items-center'>
-                        <div className='flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0'>
-                          A
-                        </div>
-                        <div className='relative ml-3 text-sm bg-white py-2 px-4 shadow rounded-xl'>
-                          <div className='flex flex-row items-center'>
-                            <button className='flex items-center justify-center bg-indigo-600 hover:bg-indigo-800 rounded-full h-8 w-10'>
-                              <svg
-                                className='w-6 h-6 text-white'
-                                fill='none'
-                                stroke='currentColor'
-                                viewBox='0 0 24 24'
-                                xmlns='http://www.w3.org/2000/svg'>
-                                <path
-                                  strokeLinecap='round'
-                                  strokeLinejoin='round'
-                                  strokeWidth='1.5'
-                                  d='M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z'></path>
-                                <path
-                                  strokeLinecap='round'
-                                  strokeLinejoin='round'
-                                  strokeWidth='1.5'
-                                  d='M21 12a9 9 0 11-18 0 9 9 0 0118 0z'></path>
-                              </svg>
-                            </button>
-                            <div className='flex flex-row items-center space-x-px ml-4'>
-                              <div className='h-2 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-2 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-4 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-8 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-8 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-10 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-10 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-12 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-10 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-6 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-5 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-4 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-3 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-2 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-2 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-2 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-10 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-2 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-10 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-8 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-8 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-1 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-1 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-2 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-8 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-8 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-2 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-2 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-2 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-2 w-1 bg-gray-500 rounded-lg'></div>
-                              <div className='h-4 w-1 bg-gray-500 rounded-lg'></div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div> */}
                     </div>
                   </div>
                 </div>

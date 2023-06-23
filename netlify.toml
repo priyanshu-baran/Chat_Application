@@ -1,0 +1,13 @@
+[build]
+  command = "cd frontend && npm install && npm run build && cd ../backend && npm install"
+  publish = "frontend/build"
+[functions]
+  directory = "backend"
+  node_bundler = "esbuild"
+  external_node_modules = ["express", "mongodb"]
+  [functions.command]
+    command = "npm run start"
+[[redirects]]
+  from="/*"
+  to="/.netlify/functions/index.html"
+  status=200

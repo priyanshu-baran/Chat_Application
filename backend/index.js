@@ -4,14 +4,13 @@ import cors from 'cors';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 dotenv.config();
-import UserState from './models/state.model.js';
-import Message from './models/message.model.js';
 // import serverless from 'serverless-http';
 
 // const router = express.Router();
 
+import UserState from './models/state.model.js';
+import Message from './models/message.model.js';
 import usersRouter from './routes/users.js';
-import messagesRouter from './routes/messages.js';
 
 const app = express();
 
@@ -29,7 +28,6 @@ app.use(express.json());
 // });
 
 app.use('/users', usersRouter);
-app.use('/msg', messagesRouter);
 // app.use('/api/env', router);
 
 const uri = process.env.ATLAS_URI;
@@ -58,11 +56,11 @@ let currentRoom = null;
 io.on('connection', (socket) => {
   console.log(`User Connected: ${socket.id}`);
 
-  socket.on('loggedIn', async (userData) => {
+  socket.on('loggedIn', async ({ details, name }) => {
     try {
       await UserState.findOneAndUpdate(
-        { id: userData.uid },
-        { name: userData.displayName, status: 'online' },
+        { id: details.uid },
+        { name: name, status: 'online' },
         { upsert: true }
       );
       const onlineUsers = await UserState.find(
@@ -75,7 +73,7 @@ io.on('connection', (socket) => {
         { name: 1 }
       );
       const offlineUserNames = offlineUsers.map((user) => user.name);
-      socket.broadcast.emit('userLoggedIn', userData.displayName);
+      socket.broadcast.emit('userLoggedIn', name);
       socket.broadcast.emit('updateUserLists', {
         onlineUsers: onlineUserNames,
         offlineUsers: offlineUserNames,
