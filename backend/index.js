@@ -38,7 +38,7 @@ console.log(server);
 const io = new Server(server, {
   cors: {
     // origin: 'http://localhost:3000',
-    origin: 'https://web-based-real-time-chat-application.netlify.app',
+    origin: '*',
     methods: ['GET', 'POST'],
     allowedHeaders: ['my-custom-header'],
     credentials: true,
