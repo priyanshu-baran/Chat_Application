@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -223,7 +224,12 @@ export const Entrance = () => {
     });
   };
   useEffect(() => {
-    sessionStorage.removeItem('user');
+    const userString = localStorage.getItem('user');
+    if (userString === '' || userString === null) {
+      usenavigate('/');
+    } else {
+      usenavigate('/main');
+    }
   }, []);
   const validationSchema = Yup.object({
     username: Yup.string().required('*Name is required'),

@@ -133,12 +133,14 @@ export const Main = ({ online }) => {
     socket.emit('loggedOut', userDetails);
     usenavigate('/');
     toast.success('Logged out successfully');
-    sessionStorage.removeItem('user');
   };
   useEffect(() => {
+    const userString = localStorage.getItem('user');
+    if (userString === '' || userString === null) {
+      usenavigate('/');
+    }
+    let infoUser = JSON.parse(userString);
     const fetchData = () => {
-      const userString = sessionStorage.getItem('user');
-      let infoUser = JSON.parse(userString);
       axios
         .get(`${data.react_url}/users/`)
         .then((res) => {

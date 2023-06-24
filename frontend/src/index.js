@@ -35,9 +35,10 @@ onAuthStateChanged(auth, (user) => {
       }
       return value;
     });
-    sessionStorage.setItem('user', userString);
+    localStorage.setItem('user', userString);
   } else {
     console.log('User is signed out');
+    localStorage.removeItem('user');
   }
 });
 
