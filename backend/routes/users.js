@@ -9,6 +9,19 @@ router.route('/').get((req, res) => {
     .catch((err) => res.status(400).json('Error: ' + err));
 });
 
+router.route('/:username').get(async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 router.route('/add').post((req, res) => {
   const username = req.body.username;
   const email = req.body.email;

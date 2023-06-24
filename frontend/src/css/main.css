@@ -6,7 +6,7 @@ a {
   cursor: pointer;
 }
 
-/* ::-webkit-scrollbar {
+::-webkit-scrollbar {
   width: 5px;
 }
 
@@ -17,7 +17,7 @@ a {
 
 ::-webkit-scrollbar-track {
   background-color: #f1f1f1;
-} */
+}
 
 .switch-toggle {
   height: 40px;
@@ -82,4 +82,18 @@ a {
 
 .selected {
   background-color: #8fd1a6;
+}
+
+.edit_icon {
+  padding-left: 5px;
+  font-size: 20px;
+  opacity: 0;
+}
+
+.edit_icon:hover {
+  cursor: pointer;
+}
+
+.icon_parent:hover .edit_icon {
+  opacity: 1;
 }

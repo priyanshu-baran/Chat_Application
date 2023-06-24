@@ -14,11 +14,7 @@ Although there are still more features which I am looking forward to add like, f
 
 ## Demo 👀
 
-<!-- You can view the demo of this website by following [this link](https://web-based-real-time-chat-application.netlify.app/) **(For better user experience don't open it in your mobile phone)**. Or else  -->
-
-You can view its demonstration video [here](https://clipchamp.com/watch/B3gtuU7A1nO).
-
-<!-- <br> For hosting, I have used [Netlify](https://app.netlify.com) to host this website. -->
+You can view the demo of this website by following [this link](https://web-based-real-time-chat-app.netlify.app/) **(For better user experience don't open it in your mobile phone)**. Or else you can also view its demonstration video [here](https://clipchamp.com/watch/B3gtuU7A1nO).<br> For hosting, I have used [Netlify](https://app.netlify.com) to host the frontend and [Render](https://dashboard.render.com/) and to host backend.
 
 ---
 
@@ -44,8 +40,6 @@ You can view its demonstration video [here](https://clipchamp.com/watch/B3gtuU7A
 6. Now, since all setup part is done so let's move ahead by running this command, again in both the terminals seperately.
    > npm start
 7. If both of your terminals runs smoothly without showing any error, then congrats 🥳🎉 you are in good state, else re-config your setup and try again 🤕🫣.
-<!-- 8. You can also host it by changing the details with yours on Netlify. I have already provided the netlify.toml file which is required to host on Netlify. You simply need to create an account on Netlify and then select import project from github and select this repo after forking it in yours.
-   > **_Note:_** Don't forget to change the **react_url** defined in the frontend/src/index.js file according to your hosted link and then share it to test it out. -->
 
 ---
 
