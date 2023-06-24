@@ -6,15 +6,13 @@
 
 This is a cool web-based real-time chat application with both Firebase Authentication as well as MERN Stack implementation. In this I have used a pre-made tailwind css template to make my work fast and then changed it according to my requirement. I have enabled both google sign-in and email/password signup method for firebase authentication. I have also stored all the users, their online/offline status and all the messages in the MongoDB Atlas database.
 
-Although there are still more features which I am looking forward to add like, file and emoji sharing along with the messages, dynamically editing profile image and profile about and much more.
-
-<!-- Now without wasting more time give it a short using the below provided demo link and then share your experience in this [post](). -->
+Although there are still more features which I am looking forward to add like, file and emoji sharing along with the messages, dynamically editing profile image and profile about and much more. Now without wasting more time give it a short using the below provided demo link and then share your experience in this [post](https://www.linkedin.com/posts/priyanshu-baran_chatapplication-realtimechat-socketio-activity-7078430944554065920-BhLM?utm_source=share&utm_medium=member_desktop).
 
 ---
 
 ## Demo 👀
 
-You can view the demo of this website by following [this link](https://web-based-real-time-chat-app.netlify.app/) **(For better user experience don't open it in your mobile phone)**. Or else you can also view its demonstration video [here](https://clipchamp.com/watch/B3gtuU7A1nO).<br> For hosting, I have used [Netlify](https://app.netlify.com) to host the frontend and [Render](https://dashboard.render.com/) and to host backend.
+You can view the demo of this website by following [this link](https://web-based-real-time-chat-app.netlify.app/) **(For better user experience don't open it in your mobile phone)**. Or else you can also view its demonstration video [here](https://clipchamp.com/watch/B3gtuU7A1nO).<br> For hosting, I have used [Netlify](https://app.netlify.com) to host the frontend and [Render](https://dashboard.render.com/) to host the backend.
 
 ---
 

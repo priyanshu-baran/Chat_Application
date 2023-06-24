@@ -197,9 +197,11 @@ export const Entrance = () => {
         console.log(error);
       });
   };
-  const handleSignOutWithGoogle = () => {
-    data.auth.signOut();
-    sessionStorage.removeItem('user');
+  const handleSignInWithFacebook = () => {
+    toast.info('Feature comming soon..!!');
+  };
+  const handleLogInWithFacebook = () => {
+    toast.info('Feature comming soon..!!');
   };
   const handleShowHide = () => {
     const val = icon.current.id;
@@ -291,7 +293,7 @@ export const Entrance = () => {
           </div>
           <div className='line'></div>
           <div
-            onClick={handleSignOutWithGoogle}
+            onClick={handleLogInWithFacebook}
             className='media-options'>
             <a className='field facebook'>
               <i className='bx bxl-facebook facebook-icon'></i>
@@ -403,7 +405,9 @@ export const Entrance = () => {
             </div>
           </div>
           <div className='line'></div>
-          <div className='media-options'>
+          <div
+            onClick={handleSignInWithFacebook}
+            className='media-options'>
             <a className='field facebook'>
               <i className='bx bxl-facebook facebook-icon'></i>
               <span>{toggleButton.facebook}</span>
