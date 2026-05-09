@@ -18,9 +18,9 @@ app.use(helmet());
 app.use(mongoSanitize());
 app.use(express.json({ limit: '10kb' }));
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
-  : ['http://localhost:3000'];
+const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map((o) =>
+  o.trim(),
+);
 
 app.use(
   cors({
