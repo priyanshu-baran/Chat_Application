@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -10,235 +9,131 @@ import {
 } from 'firebase/auth';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import io from 'socket.io-client';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 
 import { data } from '.';
-const socket = io('http://localhost:5000');
 
 export const Entrance = () => {
-  const initialValues = () => {
-    setLoginStuff({ email: '', pass: '' });
-    setShowHide({
-      for: {
-        for1: 'hide',
-        for2: 'hide',
-      },
-      in: {
-        in1: true,
-        in2: true,
-      },
-    });
-  };
-  const usenavigate = useNavigate('');
+  const navigate = useNavigate('');
   const icon = useRef(null);
   const [toggle, setToggle] = useState(true);
+  const [loginStuff, setLoginStuff] = useState({ email: '', pass: '' });
   const [showHide, setShowHide] = useState({
-    for: {
-      for1: 'hide',
-      for2: 'hide',
-    },
-    in: {
-      in1: true,
-      in2: true,
-    },
-  });
-  const [loginStuff, setLoginStuff] = useState({
-    email: '',
-    pass: '',
+    for: { for1: 'hide', for2: 'hide' },
+    in: { in1: true, in2: true },
   });
   const [toggleButton, setToggleButton] = useState({
     facebook: 'Login with Facebook',
     google: 'Login with Google',
   });
-  const handleLogIn = (e) => {
+  useEffect(() => {
+    const userString = localStorage.getItem('user');
+    if (userString) navigate('/main');
+  }, [navigate]);
+  const handleLogIn = async (e) => {
     e.preventDefault();
-    signInWithEmailAndPassword(data.auth, loginStuff.email, loginStuff.pass)
-      .then(() => {
-        const email = data.auth.currentUser.email;
-        axios.get(`${data.react_url}/users/`).then((res) => {
-          const existingUser = res.data.find((user) => user.email === email);
-          if (existingUser) {
-            toast.success('Logged in Successfully');
-            socket.emit('loggedIn', {
-              details: data.auth.currentUser,
-              name: existingUser.username,
-            });
-            usenavigate('/main');
-          } else {
-            toast.error('Please signup first before logging in');
-          }
-        });
-      })
-      .catch((err) => {
-        toast.error('User not found');
-        initialValues();
-        console.log(err);
-      });
+    try {
+      await signInWithEmailAndPassword(
+        data.auth,
+        loginStuff.email,
+        loginStuff.pass,
+      );
+      toast.success('Logged in successfully');
+      navigate('/main');
+    } catch (err) {
+      toast.error('Email or password is incorrect');
+    }
   };
-  const handleSignUp = (values) => {
+  const handleSignUp = async (values) => {
     const { username, email, password } = values;
-    createUserWithEmailAndPassword(data.auth, email, password)
-      .then(() => {
-        const obj = { username, password, email };
-        axios
-          .get(`${data.react_url}/users/`)
-          .then((res) => {
-            const extract = res.data.filter((user) => user.email === email);
-            if (extract.length === 0) {
-              axios
-                .post(`${data.react_url}/users/add`, obj)
-                .then(() => {
-                  toast.success('Registered Successfully');
-                  socket.emit('loggedIn', {
-                    details: data.auth.currentUser,
-                    name: obj.username,
-                  });
-                  usenavigate('/main');
-                })
-                .catch((err) => {
-                  console.error(err);
-                });
-            } else {
-              toast.error('User already exists');
-            }
-          })
-          .catch((err) => {
-            console.error(err);
-          });
-      })
-      .catch((err) => {
-        console.log(err);
+    let firebaseUser = null;
+    try {
+      const cred = await createUserWithEmailAndPassword(
+        data.auth,
+        email,
+        password,
+      );
+      firebaseUser = cred.user;
+      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/users/add`, {
+        username,
+        email,
+        password,
+        firebaseUid: firebaseUser.uid,
       });
+      toast.success('Registered successfully');
+      navigate('/main');
+    } catch (err) {
+      if (firebaseUser && err.response) {
+        await firebaseUser.delete().catch(() => {});
+      }
+      if (err.code === 'auth/email-already-in-use') {
+        toast.error('Email is already registered');
+      } else if (err.response?.status === 409) {
+        toast.error('Username or email is already taken');
+      } else {
+        toast.error('Something went wrong — please try again');
+        console.error(err);
+      }
+    }
   };
-  const handleToggle = () => {
-    setToggle(!toggle);
-    toggle
-      ? setToggleButton({
-          facebook: 'Signup with Facebook',
-          google: 'Signup with Google',
-        })
-      : setToggleButton({
-          facebook: 'Login with Facebook',
-          google: 'Login with Google',
-        });
-    initialValues();
-  };
-  const handleSignInWithGoogle = () => {
+  const handleGoogle = async () => {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
-    signInWithPopup(data.auth, provider)
-      .then(() => {
-        const username = data.auth.currentUser.displayName;
-        const email = data.auth.currentUser.email;
-        const password = username
-          .split(' ')
-          .reverse()
-          .map((word) => word.split('').reverse().join(''))
-          .join('')
-          .toLowerCase();
-        let obj = { username, email, password };
-        axios
-          .get(`${data.react_url}/users/`)
-          .then((res) => {
-            const extract = res.data.filter((user) => user.email === email);
-            if (extract.length === 0) {
-              axios
-                .post(`${data.react_url}/users/add`, obj)
-                .then(() => {
-                  toast.success('Registered Successfully');
-                  socket.emit('loggedIn', {
-                    details: data.auth.currentUser,
-                    name: data.auth.currentUser.displayName,
-                  });
-                  usenavigate('/main');
-                })
-                .catch((err) => {
-                  console.error(err);
-                });
-            } else {
-              toast.error('User already exists');
-              handleLogInWithGoogle();
-            }
-          })
-          .catch((err) => {
-            console.error(err);
-          });
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+    try {
+      const cred = await signInWithPopup(data.auth, provider);
+      const { uid, email, displayName } = cred.user;
+      await axios
+        .post(`${process.env.REACT_APP_BACKEND_URL}/users/add`, {
+          username: displayName,
+          email,
+          password: uid,
+          firebaseUid: uid,
+        })
+        .catch((err) => {
+          if (err.response?.status !== 409) throw err;
+        });
+      toast.success(
+        toggle ? 'Logged in successfully' : 'Registered successfully',
+      );
+      navigate('/main');
+    } catch (err) {
+      if (err.code !== 'auth/popup-closed-by-user') {
+        toast.error('Google sign-in failed');
+        console.error(err);
+      }
+    }
   };
-  const handleLogInWithGoogle = () => {
-    const provider = new GoogleAuthProvider();
-    signInWithPopup(data.auth, provider)
-      .then(() => {
-        const email = data.auth.currentUser.email;
-        axios
-          .get(`${data.react_url}/users/`)
-          .then((res) => {
-            const existingUser = res.data.find((user) => user.email === email);
-            if (existingUser) {
-              toast.success('Logged in Successfully');
-              socket.emit('loggedIn', {
-                details: data.auth.currentUser,
-                name: data.auth.currentUser.displayName,
-              });
-              usenavigate('/main');
-            } else {
-              toast.error('Please signup first before logging in');
-            }
-          })
-          .catch((err) => {
-            console.error(err);
-          });
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  };
-  const handleSignInWithFacebook = () => {
-    toast.info('Feature comming soon..!!');
-  };
-  const handleLogInWithFacebook = () => {
-    toast.info('Feature comming soon..!!');
+  const handleToggle = () => {
+    setToggle((prev) => !prev);
+    setToggleButton(
+      toggle
+        ? { facebook: 'Signup with Facebook', google: 'Signup with Google' }
+        : { facebook: 'Login with Facebook', google: 'Login with Google' },
+    );
+    setLoginStuff({ email: '', pass: '' });
+    setShowHide({
+      for: { for1: 'hide', for2: 'hide' },
+      in: { in1: true, in2: true },
+    });
   };
   const handleShowHide = () => {
     const val = icon.current.id;
     const key = `for${val.charAt(val.length - 1)}`;
     const input = `in${val.charAt(val.length - 1)}`;
-    setShowHide((prevState) => {
-      const updatedFor = {
-        ...prevState.for,
-        [key]: prevState.for[key] === 'hide' ? 'show' : 'hide',
-      };
-      const updatedIn = {
-        ...prevState.in,
-        [input]: !prevState.in[input],
-      };
-      return {
-        for: updatedFor,
-        in: updatedIn,
-      };
-    });
+    setShowHide((prev) => ({
+      for: { ...prev.for, [key]: prev.for[key] === 'hide' ? 'show' : 'hide' },
+      in: { ...prev.in, [input]: !prev.in[input] },
+    }));
   };
-  useEffect(() => {
-    const userString = localStorage.getItem('user');
-    if (userString === '' || userString === null) {
-      usenavigate('/');
-    } else {
-      usenavigate('/main');
-    }
-  }, []);
   const validationSchema = Yup.object({
-    username: Yup.string().required('*Name is required'),
+    username: Yup.string().required('*Name is required').min(3, 'Too short'),
     email: Yup.string()
       .required('*Email is required')
-      .matches(/^[\w-\\.]+@([\w-]+\.)+[\w-]{2,4}$/, 'Invalid email address'),
+      .matches(/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/, 'Invalid email'),
     password: Yup.string()
       .required('*Password is required')
-      .min(8, 'Password is too small'),
+      .min(8, 'Min 8 characters'),
     coPassword: Yup.string()
       .oneOf([Yup.ref('password'), null], 'Passwords must match')
       .required('*Confirm Password is required'),
@@ -264,7 +159,7 @@ export const Entrance = () => {
               </div>
               <div className='field input-field'>
                 <input
-                  type={`${showHide.in.in1 ? 'password' : 'text'}`}
+                  type={showHide.in.in1 ? 'password' : 'text'}
                   placeholder='Password'
                   className='password'
                   value={loginStuff.pass}
@@ -277,13 +172,14 @@ export const Entrance = () => {
                   onClick={handleShowHide}
                   ref={icon}
                   id='ref1'
-                  className={`bx bx-${showHide.for.for1} eye-icon`}></i>
+                  className={`bx bx-${showHide.for.for1} eye-icon`}
+                />
               </div>
               <div className='form-link'>
                 <a className='forgot-pass'>Forgot password?</a>
               </div>
               <div className='field button-field'>
-                <button>Login</button>
+                <button type='submit'>Login</button>
               </div>
             </form>
             <div className='form-link'>
@@ -297,17 +193,17 @@ export const Entrance = () => {
               </span>
             </div>
           </div>
-          <div className='line'></div>
+          <div className='line' />
           <div
-            onClick={handleLogInWithFacebook}
+            onClick={() => toast.info('Feature coming soon..!!')}
             className='media-options'>
             <a className='field facebook'>
-              <i className='bx bxl-facebook facebook-icon'></i>
+              <i className='bx bxl-facebook facebook-icon' />
               <span>{toggleButton.facebook}</span>
             </a>
           </div>
           <div
-            onClick={handleLogInWithGoogle}
+            onClick={handleGoogle}
             className='media-options'>
             <a className='field google'>
               <img
@@ -378,7 +274,8 @@ export const Entrance = () => {
                     onClick={handleShowHide}
                     ref={icon}
                     id='ref2'
-                    className={`bx bx-${showHide.for.for2} eye-icon`}></i>
+                    className={`bx bx-${showHide.for.for2} eye-icon`}
+                  />
                 </div>
                 <div className='field input-field'>
                   <Field
@@ -410,17 +307,17 @@ export const Entrance = () => {
               </span>
             </div>
           </div>
-          <div className='line'></div>
+          <div className='line' />
           <div
-            onClick={handleSignInWithFacebook}
+            onClick={() => toast.info('Feature coming soon..!!')}
             className='media-options'>
             <a className='field facebook'>
-              <i className='bx bxl-facebook facebook-icon'></i>
+              <i className='bx bxl-facebook facebook-icon' />
               <span>{toggleButton.facebook}</span>
             </a>
           </div>
           <div
-            onClick={handleSignInWithGoogle}
+            onClick={handleGoogle}
             className='media-options'>
             <a className='field google'>
               <img

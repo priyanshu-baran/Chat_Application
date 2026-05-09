@@ -4,7 +4,6 @@
   display: grid;
   place-items: center;
   background-color: #4070f4;
-  column-gap: 30px;
 }
 
 .form {
@@ -13,17 +12,7 @@
   width: 100%;
   padding: 30px;
   border-radius: 6px;
-  background: #FFF;
-}
-
-.forms.show-signup .form.signup {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.forms.show-signup .form.login {
-  opacity: 0;
-  pointer-events: none;
+  background: #fff;
 }
 
 header {
@@ -58,7 +47,7 @@ form {
 .field input {
   outline: none;
   padding: 0 15px;
-  border: 1px solid#CACACA;
+  border: 1px solid #cacaca;
 }
 
 .field input:focus {
@@ -106,6 +95,7 @@ form {
 
 .form-content a:hover {
   text-decoration: underline;
+  cursor: pointer;
 }
 
 .line {
@@ -122,7 +112,7 @@ form {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: #FFF;
+  background-color: #fff;
   color: #8b8b8b;
   padding: 0 15px;
 }
@@ -136,6 +126,7 @@ form {
 a.facebook {
   color: #fff;
   background-color: #4267b2;
+  cursor: pointer;
 }
 
 a.facebook .facebook-icon {
@@ -165,7 +156,8 @@ img.google-img {
 }
 
 a.google {
-  border: 1px solid #CACACA;
+  border: 1px solid #cacaca;
+  cursor: pointer;
 }
 
 a.google span {
@@ -182,4 +174,6 @@ a.google span {
 
 .error {
   color: red;
+  font-size: 13px;
+  margin-top: 4px;
 }

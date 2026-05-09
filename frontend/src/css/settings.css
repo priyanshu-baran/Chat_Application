@@ -1,0 +1,342 @@
+/* ::selection {
+  background: #6d50e2;
+  color: #fff;
+}
+
+.course_body {
+  display: grid;
+  place-items: center;
+  height: calc(100vh);
+  width: 99vw;
+}
+
+.container {
+  width: calc(50%-20px);
+  padding: 40px 50px 40px 40px;
+  background: #fff;
+  margin: 25px 20px;
+  border-radius: 12px;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.container .topic {
+  text-align: center;
+  font-size: 30px;
+  font-weight: 500;
+}
+
+.course_content {
+  display: flex;
+  align-items: center;
+  height: 75vh;
+  width: 50vw;
+  justify-content: space-between;
+}
+
+.course_home form {
+  height: 70vh;
+}
+
+.course_content .list {
+  display: flex;
+  flex-direction: column;
+  width: 20%;
+  margin-right: 50px;
+  position: relative;
+}
+
+.course_content .list label {
+  height: 60px;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 60px;
+  cursor: pointer;
+  padding-left: 25px;
+  transition: all 0.5s ease;
+  color: #333;
+  z-index: 12;
+}
+
+[id^='course_home_']:checked ~ .list label.course_home,
+[id^='blog_']:checked ~ .list label.blog,
+[id^='help_']:checked ~ .list label.help,
+[id^='code_']:checked ~ .list label.code,
+[id^='about_']:checked ~ .list label.about {
+  color: #fff;
+}
+
+.course_content .list label:hover {
+  color: #6d50e2;
+}
+
+.course_content .slider {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 60px;
+  width: 100%;
+  border-radius: 12px;
+  background: #6d50e2;
+  transition: all 0.4s ease;
+}
+
+[id^='course_home_']:checked ~ .list .slider {
+  top: 0;
+}
+
+[id^='blog_']:checked ~ .list .slider {
+  top: 60px;
+}
+
+[id^='help_']:checked ~ .list .slider {
+  top: 120px;
+}
+
+[id^='code_']:checked ~ .list .slider {
+  top: 180px;
+}
+
+[id^='about_']:checked ~ .list .slider {
+  top: 240px;
+}
+
+.course_content .text-content {
+  width: 80%;
+  height: 100%;
+}
+
+.course_content .text {
+  display: none;
+}
+
+.course_content .text .title {
+  font-size: 25px;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.course_content .text p {
+  text-align: justify;
+}
+
+.course_content .text-content .course_home {
+  display: block;
+}
+
+[id^='course_home_']:checked ~ .text-content .course_home,
+[id^='blog_']:checked ~ .text-content .blog,
+[id^='help_']:checked ~ .text-content .help,
+[id^='code_']:checked ~ .text-content .code,
+[id^='about_']:checked ~ .text-content .about {
+  display: block;
+}
+
+[id^='blog_']:checked ~ .text-content .course_home,
+[id^='help_']:checked ~ .text-content .course_home,
+[id^='code_']:checked ~ .text-content .course_home,
+[id^='about_']:checked ~ .text-content .course_home {
+  display: none;
+}
+
+.course_content input {
+  display: none;
+}
+
+.text .btn {
+  margin: 10px 0;
+  text-align: left;
+}
+
+.text .btn a {
+  text-decoration: none;
+  background: #e74c3c;
+  color: #f2f2f2;
+  padding: 5px 8px;
+  border-radius: 3px;
+  display: inline-flex;
+  transition: 0.2s;
+}
+
+.text .btn a:hover {
+  transform: scale(0.9);
+} */
+
+::selection {
+  background: #6d50e2;
+  color: #fff;
+}
+
+/* ── Modal overlay ───────────────────────────────────────────────────────── */
+.settings-overlay {
+  position: fixed;
+  inset: 0; /* top/right/bottom/left: 0 */
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+/* ── Card ────────────────────────────────────────────────────────────────── */
+.settings-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Header row ──────────────────────────────────────────────────────────── */
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.settings-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e1e2e;
+  margin: 0;
+}
+
+.settings-close {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.settings-close:hover {
+  background: #f3f4f6;
+  color: #111;
+}
+
+/* ── Avatar row ──────────────────────────────────────────────────────────── */
+.settings-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.settings-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #6366f1;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.settings-avatar-btn {
+  font-size: 0.875rem;
+  color: #6366f1;
+  background: none;
+  border: 1px solid #6366f1;
+  border-radius: 8px;
+  padding: 6px 14px;
+  cursor: not-allowed; /* remove when photo upload is implemented */
+  opacity: 0.6;
+}
+
+/* ── Form fields ─────────────────────────────────────────────────────────── */
+.settings-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: -6px;
+}
+
+.settings-input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  color: #111827;
+  background: #f9fafb;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  background: #fff;
+}
+
+.settings-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* ── Action buttons ──────────────────────────────────────────────────────── */
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.settings-btn-cancel {
+  padding: 9px 20px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.settings-btn-cancel:hover {
+  background: #f3f4f6;
+}
+
+.settings-btn-save {
+  padding: 9px 20px;
+  border-radius: 10px;
+  border: none;
+  background: #6366f1;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.settings-btn-save:hover:not(:disabled) {
+  background: #4f46e5;
+}
+
+.settings-btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .settings-card {
+    margin: 0 16px;
+    padding: 24px 20px;
+  }
+}

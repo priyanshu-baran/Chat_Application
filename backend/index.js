@@ -1,161 +1,135 @@
 import mongoose from 'mongoose';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import { rateLimit } from 'express-rate-limit';
+import mongoSanitize from 'express-mongo-sanitize';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 dotenv.config();
 
-import UserState from './models/state.model.js';
 import Message from './models/message.model.js';
 import usersRouter from './routes/users.js';
 
 const app = express();
-
 const port = process.env.PORT || 8000;
 
-app.use(cors());
-app.use(express.json());
+app.use(helmet());
+app.use(mongoSanitize());
+app.use(express.json({ limit: '10kb' }));
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+  : ['http://localhost:3000'];
+
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      cb(new Error(`CORS blocked: ${origin}`));
+    },
+    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+    credentials: true,
+  }),
+);
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' },
+});
+app.use('/users', apiLimiter);
+
+app.get('/health', (_, res) => res.status(200).json({ status: 'ok' }));
 
 app.use('/users', usersRouter);
 
-const uri = process.env.ATLAS_URI;
-mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(process.env.ATLAS_URI);
 
-const connection = mongoose.connection;
-connection.once('open', () => {
-  console.log('MongoDB database connection established successfully');
-});
+mongoose.connection.once('open', () =>
+  console.log('✅ MongoDB connection established'),
+);
+mongoose.connection.on('error', (err) =>
+  console.error('❌ MongoDB error:', err),
+);
 
-const server = app.listen(port, () => {
-  console.log(`Server is running on port: ${port}`);
-});
+const server = app.listen(port, () =>
+  console.log(`🚀 Server running on port ${port}`),
+);
 
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:3000',
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
-    allowedHeaders: ['my-custom-header'],
     credentials: true,
   },
+  pingInterval: 10_000,
+  pingTimeout: 20_000,
 });
 
-let currentRoom = null;
-
 io.on('connection', (socket) => {
-  console.log(`User Connected: ${socket.id}`);
-
-  socket.on('loggedIn', async ({ details, name }) => {
-    try {
-      await UserState.findOneAndUpdate(
-        { id: details.uid },
-        { name: name, status: 'online' },
-        { upsert: true }
-      );
-      const onlineUsers = await UserState.find(
-        { status: 'online' },
-        { name: 1 }
-      );
-      const onlineUserNames = onlineUsers.map((user) => user.name);
-      const offlineUsers = await UserState.find(
-        { status: 'offline' },
-        { name: 1 }
-      );
-      const offlineUserNames = offlineUsers.map((user) => user.name);
-      socket.broadcast.emit('userLoggedIn', name);
-      socket.broadcast.emit('updateUserLists', {
-        onlineUsers: onlineUserNames,
-        offlineUsers: offlineUserNames,
-      });
-    } catch (err) {
-      console.error('Error updating user status:', err);
-    }
-  });
-
-  socket.on('loggedOut', async (userData) => {
-    try {
-      await UserState.findOneAndUpdate(
-        { id: userData.uid },
-        { status: 'offline' }
-      );
-      const onlineUsers = await UserState.find(
-        { status: 'online' },
-        { name: 1 }
-      );
-      const onlineUserNames = onlineUsers.map((user) => user.name);
-      const offlineUsers = await UserState.find(
-        { status: 'offline' },
-        { name: 1 }
-      );
-      const offlineUserNames = offlineUsers.map((user) => user.name);
-      socket.broadcast.emit('userLoggedOut', userData.displayName);
-      socket.broadcast.emit('updateUserLists', {
-        onlineUsers: onlineUserNames,
-        offlineUsers: offlineUserNames,
-      });
-    } catch (err) {
-      console.error('Error updating user status:', err);
-    }
-  });
-
+  console.log(`🔌 Socket connected: ${socket.id}`);
+  let currentRoom = null;
   socket.on('join_room', async (room) => {
+    if (!room || typeof room !== 'string') return;
     try {
       if (currentRoom) {
         socket.leave(currentRoom);
-        console.log(`Left ${currentRoom} room..!!`);
+        console.log(`${socket.id} left room: ${currentRoom}`);
       }
       currentRoom = room;
       socket.join(room);
-      console.log(`Joined ${room} room..!!`);
-      const initialMessages = await Message.find({ room: room });
-      if (initialMessages.length > 0) {
-        const contents = initialMessages[0].contents;
-        socket.emit('initial_messages', contents);
-      }
+      console.log(`${socket.id} joined room: ${room}`);
+      const messages = await Message.find({ room })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .lean();
+      socket.emit('initial_messages', messages.reverse());
     } catch (error) {
-      console.error('Error retrieving initial messages:', error);
+      console.error('join_room error:', error);
+      socket.emit('error', { message: 'Failed to load messages.' });
     }
   });
-
   socket.on('send_message', async (data) => {
     const { room, msgContent } = data;
+    if (!room || !msgContent?.from || !msgContent?.msg) return;
     try {
-      const existingRoom = await Message.findOne({
-        room: room,
+      const saved = await Message.create({
+        room,
+        from: msgContent.from,
+        to: msgContent.to,
+        message: msgContent.msg,
+        time: msgContent.time,
       });
-      if (existingRoom) {
-        existingRoom.contents.push({
-          from: msgContent.from,
-          to: msgContent.to,
-          message: msgContent.msg,
-          time: msgContent.time,
-        });
-        await existingRoom.save();
-      } else {
-        const newMessage = new Message({
-          room: room,
-          contents: [
-            {
-              from: msgContent.from,
-              to: msgContent.to,
-              message: msgContent.msg,
-              time: msgContent.time,
-            },
-          ],
-        });
-        await newMessage.save();
-      }
-      socket.to(room).emit('receive_message', msgContent);
+      socket.to(room).emit('receive_message', {
+        ...msgContent,
+        _id: saved._id,
+      });
     } catch (error) {
-      console.error('Error saving message:', error);
+      console.error('send_message error:', error);
+      socket.emit('error', { message: 'Failed to send message.' });
     }
   });
-
   socket.on('leave_room', (room) => {
+    if (currentRoom === room) currentRoom = null;
     socket.leave(room);
-    console.log(`Left ${room} room..!!`);
+    console.log(`${socket.id} left room: ${room}`);
   });
-
-  socket.on('disconnect', () => {
-    console.log('User Disconnected');
+  socket.on('mark_seen', async ({ room, username }) => {
+    if (!room || !username) return;
+    try {
+      await Message.updateMany(
+        { room, to: username, seen: false },
+        { $set: { seen: true } },
+      );
+      socket.to(room).emit('messages_seen', { room, seenBy: username });
+    } catch (err) {
+      console.error('mark_seen error:', err);
+    }
+  });
+  socket.on('disconnect', (reason) => {
+    console.log(`🔌 Socket disconnected: ${socket.id} — reason: ${reason}`);
   });
 });
