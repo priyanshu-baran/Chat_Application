@@ -4,11 +4,11 @@ import { toast } from 'react-toastify';
 import { ref, onValue } from 'firebase/database';
 import io from 'socket.io-client';
 import axios from 'axios';
-
-import { data } from '.';
 import { ListenToUserPresence } from './ListenToUserPresence';
 import { SkeletonUI, SkeletonMsg } from './SkeletonUI';
 import { Settings } from './Settings';
+
+import { data } from '.';
 
 const socket = io(process.env.REACT_APP_BACKEND_URL);
 
@@ -158,7 +158,6 @@ export const Main = () => {
         setUserDetails(infoUser);
         setUserInfo({
           username: infoUser.displayName,
-          photoUrl: infoUser.photoURL || '',
           shortdesc: me.about || 'Full Stack Developer',
         });
         setAllUsers(res.data.filter((u) => u.email !== infoUser.email));
